@@ -1,0 +1,64 @@
+services:
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z # como um arquivo binario do funcionamento do minio
+    command: server /data --console-address ":9001" # cria o servidor
+    environment:
+      MINIO_ROOT_USER: natan_admin
+      MINIO_ROOT_PASSWORD: natan123
+    ports:
+      - "9000:9000"  # S3 API (usada pelo dlt), onde me conecto com o minio usando o boto3
+      - "9001:9001"  # Console web: http://localhost:9001, onde hospedo minha GUI, onde iremos fazer o login
+    volumes: # pra ficar na minha maquina
+      - minio_data:/data
+    restart: unless-stopped
+    healthcheck: # se reprovar interrompe a exec do container
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  minio_data:
+
+#isso permite que eu gere um container que vai simular um datalake com o minio que vai estar rodando localmente
+
+# esse docker-compose é um documento de config que vai dizer como eu quero que gere um determinado cointainer
+# o código cria um mini servidor de armazenamento dentro do computador (um serviço que só existiria na nuvem)
+
+# termos:
+# o MinIO é um tipo de google drive/dropbx só que programável e local, usamos para salvar arquivos e organizar dados e acessar via código
+# S3: simple storage service, é um serviço da AWS para guardar arquivos, ele guarda arquivos em buckets (tipo pastas)
+
+# O MinIO imita o S3, mas localmente
+# isso é importante pois podemos testar pipelines sem pagar cloud, funciona igual AWS, é fácil de migrar depois. Além disso, ferramentas como dlt e spark usam o S3
+
+# a "image" é como uma receita pronta para que o container vai ser, ela já vem com o MinIO instalado, configurado e pronto pra rodas, o docker baixa da internet
+
+# o código funciona no MinIO(LOCAL) e na AWS S3(PRODUÇÃO)
+
+#[ código Python ]
+#        ↓
+#(faz requisição HTTP)
+#        ↓
+#localhost:9000 (API S3) -> API está ouvindo nessa porta
+#        ↓
+#[ MinIO processa ] -> O minio server interpreta a API S3
+#        ↓
+#[ salva no volume (/data) ]-> (/data (container)) -> (minio_data(volume real)) -> meu HD
+
+#paralelamente:
+
+#[ Você ]
+#   ↓
+#Navegador → http://localhost:9001
+#   ↓
+#Painel Web (interface gráfica)
+
+#docker compose up: o docker baixa a imagem do minio e cria um container, o minio começa a rodar e abre as 2 portas, na 9001 vai ter uma interface com meu login e senha e depois os buckets
+
+#no painel a gente loga e cria um bucket, podemos subir um arquivo pela interface
+
+#isso vai simular um datalake na minha maquina local, mas numa empresa que tem seu próprio datacenter conseguimos criar o datalake dentro do servidor usando o MinIO 
+
+#no navegador ao fazer http://127.0.0.1:9001 acessamos o MinIO, podemos seguir no link no terminal ao rodar docker compose up
+#depois do login, criamos um bucket
