@@ -1,0 +1,27 @@
+# Segredos — nunca commitar
+.env
+.dlt/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Airflow
+logs/
+airflow.db
+airflow.cfg
+
+# dlt state local
+.dlt/pipeline_state/
+
+# dados gerados no modo local (LOCAL=true)
+data/
+
+# OS
+.DS_Store
+Thumbs.db
